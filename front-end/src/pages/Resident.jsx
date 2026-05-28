@@ -1,17 +1,18 @@
 /* eslint-disable no-unused-vars */
 import React from 'react';
 import Header from '../components/Header';
-import Navbar from '../components/Navbar';
+
 import Sidebar from '../components/Sidebar';
 import '../styles/Resident.css';
 import SearchBar from '../components/SearchBar';
 import AddButton from '../components/AddButton';
 import AddResident from '../components/AddResident';
-import { FaEdit, FaTrash, FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import axiosIntance from '../untils/axiosIntance';
+import axiosInstance from '../utils/axiosInstance';
 import Toast from '../components/Toast';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
-import { validatePhoneNumber } from '../untils/helper';
+import { validatePhoneNumber } from '../utils/helper';
+import ResidentTable from './Resident/components/ResidentTable';
+import ResidentDetailModal from './Resident/components/ResidentDetailModal';
 
 const Resident = () => {
   const [open, setOpen] = React.useState(() => {
@@ -41,7 +42,7 @@ const Resident = () => {
 
   React.useEffect(() => {
     const fetchHouseholds = async () => {
-      const res = await axiosIntance.get('/households/get-all-households');
+      const res = await axiosInstance.get('/households/get-all-households');
       setHouseholds(res.data.households || res.data);
     };
     fetchHouseholds();
@@ -147,7 +148,7 @@ const Resident = () => {
   }, [search, residentsByRoom]);
 
   const fetchResidents = async () => {
-    const response = await axiosIntance.get('/residents/get-all-residents');
+    const response = await axiosInstance.get('/residents/get-all-residents');
     const data = response.data.residents || response.data;
     setResidents(data);
   };
@@ -168,7 +169,7 @@ const Resident = () => {
     }
 
     try {
-      const response = await axiosIntance.post('/residents/create-resident', data);
+      const response = await axiosInstance.post('/residents/create-resident', data);
       await fetchResidents();
       setShowAddResident(false);
       setToast({ message: "Thêm nhân khẩu thành công!", type: "success" });
@@ -185,7 +186,7 @@ const Resident = () => {
     }
 
     try {
-      const response = await axiosIntance.put(`/residents/update-resident/${editResident.ResidentID}`, data);
+      const response = await axiosInstance.put(`/residents/update-resident/${editResident.ResidentID}`, data);
       const updatedResident = response.data.newResident || response.data;
       setResidents((prev) =>
         prev.map((h) => (h.ResidentID === updatedResident.ResidentID ? updatedResident : h))
@@ -200,7 +201,7 @@ const Resident = () => {
 
   const handleDeleteResident = async (id) => {
     try {
-      await axiosIntance.delete(`/residents/delete-resident/${id}`);
+      await axiosInstance.delete(`/residents/delete-resident/${id}`);
       setResidents((prev) => prev.filter((r) => r.ResidentID !== id));
       await fetchResidents();
       setToast({ message: "Xóa nhân khẩu thành công!", type: "success" });
@@ -209,17 +210,16 @@ const Resident = () => {
     }
   };
 
-  const handleShowAddResident = (household) => {
-    const currentCount = getResidentCount(household.HouseholdID);
-    if (currentCount >= household.Members) {
-      setToast({ message: "Số nhân khẩu đã đạt tối đa cho phòng này!", type: "error" });
-      return;
-    }
-    setShowAddResident({
-      householdId: household.HouseholdID,
-      fullName: "",
-      relationship: ""
-    });
+  const handleEditClick = (resident) => {
+    setEditResident(resident);
+  };
+
+  const handleDeleteClick = (resident) => {
+    setDeletingResident(resident);
+  };
+
+  const handleSelectResident = (resident) => {
+    setSelectedResident(resident);
   };
 
   return (
@@ -229,11 +229,11 @@ const Resident = () => {
         type={toast.type}
         onClose={() => setToast({ message: '', type: 'info' })}
       />
-      <div className="resident-container">
+      <div className="page-container">
         <Header />
-        <div className="resident-body">
+        <div className="page-body">
           <Sidebar open={open} setOpen={setOpen} />
-          <div className={`resident-content ${open ? 'sidebar-open' : 'sidebar-closed'}`}>
+          <div className={`page-content ${open ? 'sidebar-open' : 'sidebar-closed'}`}>
             <div className="resident-search">
               <div className="resident-title"><h1>Danh sách nhân khẩu:</h1></div>
               <SearchBar
@@ -249,196 +249,22 @@ const Resident = () => {
               />
             </div>
             <div className="resident-list">
-              <table className="resident-table">
-                <thead>
-                  <tr>
-                    <th>Số phòng</th>
-                    <th>Họ tên</th>
-                    <th>Giới tính</th>
-                    <th>Quan hệ với chủ hộ</th>
-                    <th>Số điện thoại</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(residentsByRoom).map(([room, data]) => {
-                    const householdHead = data.householdHead;
-                    const isExpanded = expandedRooms[room];
-                    const searchLower = search.toLowerCase();
-                    
-                    // Kiểm tra xem phòng này có chứa kết quả tìm kiếm không
-                    const hasSearchMatch = search && (
-                      (householdHead?.FullName || '').toLowerCase().includes(searchLower) ||
-                      (householdHead?.PhoneNumber || '').toLowerCase().includes(searchLower) ||
-                      data.members.some(member => 
-                        (member.FullName || '').toLowerCase().includes(searchLower) ||
-                        (member.PhoneNumber || '').toLowerCase().includes(searchLower)
-                      )
-                    );
-                    
-                    // Nếu đang tìm kiếm và phòng này không có kết quả, bỏ qua
-                    if (search && !hasSearchMatch) {
-                      return null;
-                    }
-
-                    // Nếu đang tìm kiếm, hiển thị tất cả thành viên
-                    const shouldShowMembers = search || isExpanded;
-                    
-                    // Kiểm tra xem có cần hiển thị dòng chủ hộ không
-                    const shouldShowHouseholdHead = !search || (householdHead && (
-                      householdHead.FullName.toLowerCase().includes(searchLower) ||
-                      householdHead.PhoneNumber?.toLowerCase().includes(searchLower)
-                    ));
-                    
-                    return (
-                      <React.Fragment key={room}>
-                        {/* Hiển thị chủ hộ */}
-                        {shouldShowHouseholdHead && (
-                          <tr
-                            className={`household-head-row ${hasSearchMatch ? 'search-match' : ''}`}
-                            onClick={() => {
-                              if (householdHead) {
-                                setSelectedResident(householdHead);
-                              } else if (!search && data.members.length > 1) {
-                                toggleRoom(room);
-                              }
-                            }}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <td>
-                              {!search && data.members.length > 1 ? (
-                                <div className="room-cell" onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleRoom(room);
-                                }}>
-                                  {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-                                  <span>{room}</span>
-                                </div>
-                              ) : (
-                                <div className="room-cell">
-                                  <span style={{ visibility: 'hidden' }}><FaChevronDown /></span>
-                                  <span>{room}</span>
-                                </div>
-                              )}
-                            </td>
-                            <td>{householdHead?.FullName || 'Chưa có chủ hộ'}</td>
-                            <td>{householdHead?.Sex || '-'}</td>
-                            <td>Chủ hộ</td>
-                            <td>{householdHead?.PhoneNumber || '-'}</td>
-                            <td className="resident-actions">
-                              {householdHead && (
-                                <>
-                                  <FaEdit
-                                    className="icon-action edit"
-                                    title="Sửa"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditResident(householdHead);
-                                    }}
-                                  />
-                                  <FaTrash
-                                    className="icon-action delete"
-                                    title="Xóa"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeletingResident(householdHead);
-                                    }}
-                                  />
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                        )}
-                        {/* Hiển thị các thành viên khác */}
-                        {shouldShowMembers && data.members
-                          .filter(member => member.ResidentID !== householdHead?.ResidentID)
-                          .map((member, idx) => {
-                            // Kiểm tra xem thành viên này có khớp với từ khóa tìm kiếm không
-                            const isMemberMatch = search && (
-                              (member.FullName || '').toLowerCase().includes(searchLower) ||
-                              (member.PhoneNumber || '').toLowerCase().includes(searchLower)
-                            );
-                            
-                            // Nếu đang tìm kiếm và thành viên này không khớp, bỏ qua
-                            if (search && !isMemberMatch) {
-                              return null;
-                            }
-                            
-                            return (
-                              <tr
-                                key={member.ResidentID || idx}
-                                className={`${member.ResidencyStatus === "Đã chuyển đi" ? "resident-row-leaved" : ""} ${isMemberMatch ? 'search-match' : ''}`}
-                                onClick={() => setSelectedResident(member)}
-                                style={{ cursor: 'pointer' }}
-                              >
-                                <td>
-                                  <div className="room-cell">
-                                    <span style={{ visibility: 'hidden' }}><FaChevronDown /></span>
-                                    <span>{room}</span>
-                                  </div>
-                                </td>
-                                <td>{member.FullName}</td>
-                                <td>{member.Sex}</td>
-                                <td>{member.Relationship}</td>
-                                <td>{member.PhoneNumber || '-'}</td>
-                                <td className="resident-actions">
-                                  <FaEdit
-                                    className="icon-action edit"
-                                    title="Sửa"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditResident(member);
-                                    }}
-                                  />
-                                  <FaTrash
-                                    className="icon-action delete"
-                                    title="Xóa"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeletingResident(member);
-                                    }}
-                                  />
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <ResidentTable
+                residentsByRoom={residentsByRoom}
+                expandedRooms={expandedRooms}
+                search={search}
+                onRoomToggle={toggleRoom}
+                onSelectResident={handleSelectResident}
+                onEditClick={handleEditClick}
+                onDeleteClick={handleDeleteClick}
+              />
             </div>
 
-            {selectedResident && (
-              <div className="resident-detail-overlay" onClick={() => setSelectedResident(null)}>
-                <div className="resident-detail-modal" onClick={e => e.stopPropagation()}>
-                  <h3>Thông tin chi tiết nhân khẩu</h3>
-                  <div className="resident-detail-content">
-                    <div className="detail-row">
-                      <p><strong>Họ tên:</strong> {selectedResident.FullName}</p>
-                      <p><strong>Giới tính:</strong> {selectedResident.Sex}</p>
-                    </div>
-                    <div className="detail-row">
-                      <p><strong>Ngày sinh:</strong> {selectedResident.DateOfBirth}</p>
-                      <p><strong>Quan hệ với chủ hộ:</strong> {selectedResident.Relationship}</p>
-                    </div>
-                    <div className="detail-row">
-                      <p><strong>Số điện thoại:</strong> {selectedResident.PhoneNumber || '-'}</p>
-                      <p><strong>Trình độ học vấn:</strong> {selectedResident.EducationLevel || '-'}</p>
-                    </div>
-                    <div className="detail-row">
-                      <p><strong>Nghề nghiệp:</strong> {selectedResident.Occupation || '-'}</p>
-                      <p><strong>Phòng:</strong> {roomNumbers[String(selectedResident.HouseholdID)] || '---'}</p>
-                    </div>
-                    <div className="detail-row">
-                      <p><strong>Tình trạng cư trú:</strong> {selectedResident.ResidencyStatus}</p>
-                      <p><strong>Ngày đăng ký:</strong> {selectedResident.RegistrationDate}</p>
-                    </div>
-                  </div>
-                  <button className="close-detail-btn" onClick={() => setSelectedResident(null)}>Đóng</button>
-                </div>
-              </div>
-            )}
+            <ResidentDetailModal
+              selectedResident={selectedResident}
+              roomNumbers={roomNumbers}
+              onClose={() => setSelectedResident(null)}
+            />
 
             <AddButton onClick={() => setShowAddResident(true)} />
             <AddResident
@@ -473,7 +299,7 @@ const Resident = () => {
             />
           </div>
         </div>
-        <Navbar />
+        
       </div>
     </>
   );

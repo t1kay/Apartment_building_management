@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React from 'react';
-import axiosInstance from '../untils/axiosIntance';
+import axiosInstance from '../utils/axiosInstance';
 import '../styles/FeeDetailSpecial.css';
 
 const FeeDetailSpecial = ({CollectionID, FeeTypeName}) => {

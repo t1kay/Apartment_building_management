@@ -1,6 +1,6 @@
 import React from 'react';
 import{ useState, useEffect } from 'react';
-import axiosInstance from '../untils/axiosIntance';
+import axiosInstance from '../utils/axiosInstance';
 import '../styles/AddFeeCollection.css';
 import AddFeeType from './AddFeeType';
 const AddFeeCollection = ({ open, onClose, onSubmit, initialData = {} }) => {

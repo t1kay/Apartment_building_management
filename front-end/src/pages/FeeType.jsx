@@ -3,11 +3,11 @@ import React, { useState, useEffect } from "react";
 import "../styles/FeeType.css";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
+
 import SearchBar from "../components/SearchBar";
 import AddButton from "../components/AddButton";
 import Toast from "../components/Toast";
-import axiosIntance from "../untils/axiosIntance";
+import axiosInstance from "../utils/axiosInstance";
 import AddFeeType from "../components/AddFeeType"; // Thêm dòng này
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import DeleteConfirmModal from "../components/DeleteConfirmModal"; 
@@ -35,7 +35,7 @@ const FeeType = () => {
   }, []);
   const fetchFeeTypes = async () => {
     try {
-      const res = await axiosIntance.get('/fee-type/get-all-fee-type');
+      const res = await axiosInstance.get('/fee-type/get-all-fee-type');
       setFeeTypes(res.data.feeTypes || res.data);
     } catch {
       setFeeTypes([]);
@@ -53,10 +53,10 @@ const FeeType = () => {
   const handleAddOrEditFeeType = async (data) => {
     try {
       if (editFeeType) {
-        await axiosIntance.put(`/fee-type/update-fee-type/${editFeeType.FeeTypeID}`, data);
+        await axiosInstance.put(`/fee-type/update-fee-type/${editFeeType.FeeTypeID}`, data);
         setToast({ message: "Cập nhật loại phí thành công!", type: "success" });
       } else {
-        await axiosIntance.post('/fee-type/create-fee-type', data);
+        await axiosInstance.post('/fee-type/create-fee-type', data);
         setToast({ message: "Thêm loại phí thành công!", type: "success" });
       }
       setShowAddFeeType(false);
@@ -71,7 +71,7 @@ const FeeType = () => {
   const handleDeleteFeeType = async () => {
     if (!deletingFeeType) return;
     try {
-      await axiosIntance.delete(`/fee-type/delete-fee-type/${deletingFeeType.FeeTypeID}`);
+      await axiosInstance.delete(`/fee-type/delete-fee-type/${deletingFeeType.FeeTypeID}`);
       setToast({ message: "Xóa loại phí thành công!", type: "success" });
       setDeletingFeeType(null);
       fetchFeeTypes();
@@ -163,7 +163,7 @@ const FeeType = () => {
             />
           </div>
         </div>
-        <Navbar />
+        
       </div>
       {selectedFeeType && (
   <div className="modal-overlay" onClick={() => setSelectedFeeType(null)}>

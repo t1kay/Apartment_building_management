@@ -1,74 +1,9 @@
-html, body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  background: #fff;
-}
-
-.vehicle-container {
-  background: #fff;
-  min-height: 100vh;
-  width: 100vw;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-.vehicle-body {
-  flex: 1;
-  display: flex;
-  position: relative;
-}
-
-.vehicle-content {
-  flex: 1;
-  padding: 24px;
-  transition: margin-left 0.3s;
-  position: relative;
-}
-
-.vehicle-content h1 {
-  font-size: 2rem;
-  color: #102eb4;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-/* Khi sidebar mở */
-.vehicle-content.sidebar-open {
-  margin-left: 250px;
-}
-
-/* Khi sidebar đóng */
-.vehicle-content.sidebar-closed {
-  margin-left: 80px;
-}
-
+/* Vehicle List & Layout */
 .vehicle-list {
   padding: 20px;
   max-height: 80vh; 
   overflow-y: auto;
   overflow-x: hidden;
-}
-
-.vehicle-list::-webkit-scrollbar {
-  width: 8px;
-  background: #f0f4fa;
-  border-radius: 8px;
-}
-
-.vehicle-list::-webkit-scrollbar-thumb {
-  background: #1972bb;
-  border-radius: 8px;
-  min-height: 40px;
-}
-
-.vehicle-list::-webkit-scrollbar-thumb:hover {
-  background: #125299;
 }
 
 .vehicle-grid {
@@ -196,44 +131,6 @@ html, body {
   margin: 0;
 }
 
-.search-type-select {
-  padding: 8px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: white;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.search-type-select:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-  outline: none;
-}
-
-.search-type-select:hover {
-  border-color: #40a9ff;
-}
-
-.search-input {
-  padding: 8px;
-  border-radius: 8px;
-  font-size: 16px;
-  border: none;
-  background: transparent;
-  transition: all 0.2s ease;
-}
-
-.search-input:focus {
-  outline: none;
-}
-
-.search-input::placeholder {
-  color: #999;
-  font-size: 16px;
-}
-
 .search-button,
 .add-button {
   padding: 8px 16px;
@@ -297,19 +194,6 @@ html, body {
 
 .edit-button:hover {
   background-color: #40a9ff;
-}
-
-.edit-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
 }
 
 .edit-modal-content {
@@ -440,19 +324,6 @@ html, body {
   background-color: #d9363e;
 }
 
-.delete-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
 .delete-modal-content {
   background: white;
   padding: 24px;
@@ -532,8 +403,7 @@ html, body {
   }
 }
 
-.search-input,
-.search-type-select {
+.search-input {
   background: #fff;
   color: #222;
   border: 1px solid #d9d9d9;

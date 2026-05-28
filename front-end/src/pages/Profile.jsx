@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-vars */
 import React from 'react';
 import Header from '../components/Header';
-import Navbar from '../components/Navbar';
+
 import Sidebar from '../components/Sidebar';
-import axiosIntance from '../untils/axiosIntance';
+import axiosInstance from '../utils/axiosInstance';
 import Toast from '../components/Toast';
-import { validateEmail, validatePassword, validatePhoneNumber } from '../untils/helper';
+import { validateEmail, validatePassword, validatePhoneNumber } from '../utils/helper';
 import '../styles/Profile.css';
 
 const Profile = () => {
@@ -29,7 +29,7 @@ const Profile = () => {
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axiosIntance.get(`/users/get-user-by-id/${userId}`);
+        const res = await axiosInstance.get(`/users/get-user-by-id/${userId}`);
         setUserInfo(res.data.user);
       } catch (error) {
         setToast({ message: 'Không lấy được thông tin người dùng!', type: 'error' });
@@ -80,7 +80,7 @@ const Profile = () => {
       if (editForm.Password && editForm.Password.trim() !== '') {
         updateData.Password = editForm.Password;
       }
-      await axiosIntance.put(`/users/update-user/${userId}`, updateData);
+      await axiosInstance.put(`/users/update-user/${userId}`, updateData);
       setUserInfo({ ...userInfo, ...updateData });
       setShowEdit(false);
       setToast({ message: 'Cập nhật thông tin thành công!', type: 'success' });
@@ -159,7 +159,7 @@ const Profile = () => {
           )}
         </div>
       </div>
-      <Navbar />
+      
     </div>
   );
 };

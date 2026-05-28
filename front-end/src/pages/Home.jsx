@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Home.css';
 import Header from '../components/Header';
-import Navbar from '../components/Navbar';
+
 import Sidebar from '../components/Sidebar';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import axiosInstance from '../untils/axiosIntance';
+import axiosInstance from '../utils/axiosInstance';
 
 let MAX_HOUSEHOLD = 100;
 let MAX_SINGLE_ROOMS = 50;
@@ -295,7 +295,7 @@ const Home = () => {
           </div>
         </div>
       </div>
-      <Navbar />
+      
     </div>
   );
 };

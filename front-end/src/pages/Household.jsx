@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React from 'react';
 import Header from '../components/Header';
-import Navbar from '../components/Navbar';
+
 import Sidebar from '../components/Sidebar';
 import '../styles/Household.css';
 import SearchBar from '../components/SearchBar';
@@ -9,7 +9,7 @@ import AddButton from '../components/AddButton';
 import AddHousehold from '../components/AddHousehold';
 import AddResident from '../components/AddResident'; 
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import axiosIntance from '../untils/axiosIntance';
+import axiosInstance from '../utils/axiosInstance';
 import Toast from '../components/Toast';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
@@ -45,14 +45,14 @@ const Household = () => {
   );
 
   const fetchHouseholds = async () => {
-    const response = await axiosIntance.get('/households/get-all-households');
+    const response = await axiosInstance.get('/households/get-all-households');
     const data = response.data.households || response.data;
     setHouseholds(sortByRoomNumber(data));
   };
 
   const handleAddHousehold = async (data) => {
     try {
-      const response = await axiosIntance.post('/households/create-household', {
+      const response = await axiosInstance.post('/households/create-household', {
         RoomNumber: data.roomNumber,
         Type: data.type,
         HouseholdHead: data.householdHead,
@@ -78,7 +78,7 @@ const Household = () => {
 
   const handleAddResident = async (residentData) => {
     try {
-      await axiosIntance.post('/residents/create-resident', {
+      await axiosInstance.post('/residents/create-resident', {
         ...residentData,
         householdId: newHouseholdId,
         relationship: "Chủ hộ",
@@ -93,7 +93,7 @@ const Household = () => {
 
   const handleEditHousehold = async (data) => {
     try {
-      const response = await axiosIntance.put(`/households/update-household/${editHousehold.HouseholdID}`, {
+      const response = await axiosInstance.put(`/households/update-household/${editHousehold.HouseholdID}`, {
         RoomNumber: data.roomNumber,
         Type: data.type,
         HouseholdHead: data.householdHead,
@@ -127,7 +127,7 @@ const Household = () => {
 
   const handleDeleteHousehold = async (id) => {
     try {
-      await axiosIntance.delete(`/households/delete-household/${id}`);
+      await axiosInstance.delete(`/households/delete-household/${id}`);
       setHouseholds((prev) => prev.filter((h) => h.HouseholdID !== id));
       await fetchHouseholds();
       setToast({ message: "Xóa hộ gia đình thành công!", type: "success" });
@@ -139,7 +139,7 @@ const Household = () => {
   // Lấy danh sách nhân khẩu khi load trang
   React.useEffect(() => {
     const fetchResidents = async () => {
-      const res = await axiosIntance.get('/residents/get-all-residents');
+      const res = await axiosInstance.get('/residents/get-all-residents');
       setResidents(res.data.residents || res.data);
     };
     fetchResidents();
@@ -280,7 +280,7 @@ const Household = () => {
           />
         </div>
       </div>
-      <Navbar />
+      
     </div>
     </>
   );

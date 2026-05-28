@@ -2,12 +2,12 @@
 import React from 'react';
 import '../styles/Fee.css';
 import Header from '../components/Header';
-import Navbar from '../components/Navbar';
+
 import Sidebar from '../components/Sidebar';
 import SearchBar from '../components/SearchBar';
 import AddButton from '../components/AddButton';
 import AddFeeCollection from '../components/AddFeeCollection';
-import axiosIntance from '../untils/axiosIntance';
+import axiosInstance from '../utils/axiosInstance';
 import FeeCollectionList from '../components/FeeCollectionList';
 import FeeDetailTable from '../components/FeeDetailTable';
 import Toast from '../components/Toast';
@@ -47,7 +47,7 @@ const Fee = () => {
  const fetchFeeDetailsByCollectionId = async (collectionId) => {
     console.log("Fetching details for collection ID:", collectionId);
     try {
-      const res = await axiosIntance.get(`/fee-detail/get-all-fee-detail?feeCollectionId=${collectionId}`);
+      const res = await axiosInstance.get(`/fee-detail/get-all-fee-detail?feeCollectionId=${collectionId}`);
       console.log("API response:", res.data);
       const data = res.data.feeDetails || res.data; // tùy API trả về
       console.log("Processed data:", data);
@@ -67,7 +67,7 @@ const Fee = () => {
           ? selectedFeeCollection?.FeeType?.UnitPrice
           : detail?.Amount;
 
-        await axiosIntance.put(
+        await axiosInstance.put(
           `/fee-detail/update-fee-detail/${detailId}`,
           {
             Amount: amount, // <-- cập nhật amount đúng cho phí chung
@@ -85,7 +85,7 @@ const Fee = () => {
 
   const handleFetchStats = async () => {
     try {
-      const res = await axiosIntance.get(
+      const res = await axiosInstance.get(
         `/fee-detail/stats/${selectedFeeCollection.CollectionID}`
       );
       setStats(res.data);
@@ -101,7 +101,7 @@ const Fee = () => {
 
   const fetchFeeCollection= async () => {
     try {
-    const res = await axiosIntance.get('/fee-collection/get-all-collection');
+    const res = await axiosInstance.get('/fee-collection/get-all-collection');
     const data = res.data.feeCollections || res.data;
 
     setFeeCollection(safeArray(data)); // tránh mọi lỗi
@@ -113,7 +113,7 @@ const Fee = () => {
 
   const handleVehicleFeeDetailUpdate = async (collectionId) => {
     try {
-      await axiosIntance.put(`/fee-detail/update-vehicle-fee/${collectionId}`);
+      await axiosInstance.put(`/fee-detail/update-vehicle-fee/${collectionId}`);
       setToast({ message: "Cập nhật phí gửi xe thành công!", type: "success" });
     } catch (error) {
       console.error("Lỗi khi cập nhật phí gửi xe:", error);
@@ -123,21 +123,21 @@ const Fee = () => {
 
   const handleAddFeeCollection = async (data) => {
     try {
-      const response = await axiosIntance.post(`/fee-collection/create-collection`, data);
+      const response = await axiosInstance.post(`/fee-collection/create-collection`, data);
       const collectionId = response.data.feeCollection?.CollectionID;
       const sc = response.data.feeCollection?.FeeType?.Scope;
       const ct = response.data.feeCollection?.FeeType?.Category;
       const ftn = response.data.feeCollection?.FeeType?.FeeTypeName;
 
       // Lấy danh sách hộ gia đình và amount mặc định
-      const householdRes = await axiosIntance.get(`/households/get-all-households`);
+      const householdRes = await axiosInstance.get(`/households/get-all-households`);
       const households = householdRes.data.households || [];
       const defaultAmount = response.data.feeCollection?.FeeType?.UnitPrice;
 
       // Chỉ tạo FeeDetail tự động nếu scope là "Chung"
       if (sc === 'Chung') {
         const createFeeDetailPromises = households.map(hh =>
-          axiosIntance.post(`/fee-detail/create-fee-detail`, {
+          axiosInstance.post(`/fee-detail/create-fee-detail`, {
             CollectionID: collectionId,
             HouseholdID: hh.HouseholdID,
             Amount: defaultAmount,
@@ -149,7 +149,7 @@ const Fee = () => {
         await Promise.all(createFeeDetailPromises);
       } else if (ftn === 'Phí gửi xe') {
           const createFeeDetailPromises = households.map(hh =>
-          axiosIntance.post(`/fee-detail/create-fee-detail`, {
+          axiosInstance.post(`/fee-detail/create-fee-detail`, {
             CollectionID: collectionId,
             HouseholdID: hh.HouseholdID,
             Amount: 0, 
@@ -174,7 +174,7 @@ const Fee = () => {
 
   const handleEditFeeCollection = async (data) => {
     try {
-      const response = await axiosIntance.put(`/fee-collection/update-collection/${editFeeCollection.CollectionID}`, data);
+      const response = await axiosInstance.put(`/fee-collection/update-collection/${editFeeCollection.CollectionID}`, data);
       
       const updatedFeeCollection = response.data.newFeeCollection || response.data;
         setFeeCollection((prev) =>
@@ -191,7 +191,7 @@ const Fee = () => {
 
   const handleDeleteFeeCollection = async (id) => {
     try {
-      await axiosIntance.delete(`/fee-collection/delete-collection/${id}`);
+      await axiosInstance.delete(`/fee-collection/delete-collection/${id}`);
       setFeeCollection((prev) => prev.filter((r) => r.CollectionID !== id));
       await fetchFeeCollection();
       if (selectedFeeCollection?.CollectionID === id) {
@@ -334,7 +334,7 @@ const Fee = () => {
 
           </div>
         </div>
-        <Navbar/>
+        
       </div>
     </>
   );

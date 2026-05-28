@@ -2,16 +2,16 @@
 import React, { useState } from 'react';
 import '../styles/Account.css';
 import Header from '../components/Header';
-import Navbar from '../components/Navbar';
+
 import Sidebar from '../components/Sidebar';
 import SearchBar from '../components/SearchBar';
 import AddButton from '../components/AddButton';
 import AddAccount from '../components/AddAccount'; 
-import axiosIntance from '../untils/axiosIntance'; 
+import axiosInstance from '../utils/axiosInstance'; 
 import { FaEdit, FaTrash } from 'react-icons/fa'; 
 import Toast from '../components/Toast';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
-import { validateEmail, validatePassword, validatePhoneNumber } from '../untils/helper';
+import { validateEmail, validatePassword, validatePhoneNumber } from '../utils/helper';
 
 const Account = () => {
   const [open, setOpen] = React.useState(() => {
@@ -32,7 +32,7 @@ const Account = () => {
 
   const handleDeleteAccount = async (id) => {
     try {
-      await axiosIntance.delete(`/users/delete-user/${id}`);
+      await axiosInstance.delete(`/users/delete-user/${id}`);
       await fetchAccounts();
       setToast({ message: 'Xóa tài khoản thành công!', type: 'success' });
     } catch (error) {
@@ -47,7 +47,7 @@ const Account = () => {
 
   const fetchAccounts = async () => {
     try {
-      const res = await axiosIntance.get('/users/get-all-user');
+      const res = await axiosInstance.get('/users/get-all-user');
       // Chuyển đổi key về camelCase cho frontend dễ dùng
       const users = (res.data.users || res.data).map(acc => ({
         id: acc.UserID,
@@ -83,7 +83,7 @@ const Account = () => {
     }
     try {
       console.log(data);
-      const response = await axiosIntance.post('/users/create-user', {
+      const response = await axiosInstance.post('/users/create-user', {
         Username: data.username,
         Password: data.password,
         FullName: data.fullname,
@@ -133,7 +133,7 @@ const Account = () => {
       if (data.password) {
         payload.Password = data.password;
       }
-      await axiosIntance.put(`/users/update-user/${editAccount.id}`, payload);
+      await axiosInstance.put(`/users/update-user/${editAccount.id}`, payload);
       setEditAccount(null);
       await fetchAccounts();
       setToast({ message: 'Cập nhật tài khoản thành công!', type: 'success' });
@@ -262,7 +262,7 @@ const Account = () => {
             />
           </div>
         </div>
-        <Navbar />
+        
       </div>
     </>
   );
