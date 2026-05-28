@@ -18,7 +18,8 @@ const Vehicle = sequelize.define("Vehicle", {
   },
   LicensePlate: { 
     type: DataTypes.STRING(20), 
-    allowNull: false 
+    allowNull: false,
+    unique: true
   },
   Brand: { 
     type: DataTypes.STRING(50) 

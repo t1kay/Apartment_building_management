@@ -3,7 +3,7 @@ DELIMITER //
 
 CREATE FUNCTION calculate_parking_fee_by_household(hid INT)
 RETURNS DECIMAL(10,2)
-DETERMINISTIC
+NOT DETERMINISTIC
 READS SQL DATA
 BEGIN
   DECLARE fee DECIMAL(10,2);
@@ -16,7 +16,7 @@ BEGIN
     END
   ) INTO fee
   FROM Vehicles
-  WHERE HouseholdID = hid;
+  WHERE HouseholdID = hid AND Status = 'Còn hạn đăng ký gửi';
 
   RETURN IFNULL(fee, 0);
 END;

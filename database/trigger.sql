@@ -1,6 +1,7 @@
---Khi thay đổi HouseholdHead, cập nhật tên trong Residents
-DELIMITER $$
+-- DELIMITER thiết lập $$ cho toàn bộ các Trigger
 
+-- 1. Khi thay đổi HouseholdHead trong Households, đồng bộ tên sang Residents
+DELIMITER $$
 CREATE TRIGGER trg_update_household_head
 AFTER UPDATE ON Households
 FOR EACH ROW
@@ -11,72 +12,132 @@ BEGIN
     WHERE HouseholdID = NEW.HouseholdID AND Relationship = 'Chủ hộ';
   END IF;
 END$$
-
 DELIMITER ;
 
--- Khi xóa Household, xóa các bản ghi liên quan trong Residents, Vehicles và FeeDetails
+-- 2. Triggers trên bảng Residents: Đồng bộ Chủ hộ và tự động cập nhật Members count
 DELIMITER $$
 
-CREATE TRIGGER trg_delete_household
-BEFORE DELETE ON Households
+CREATE TRIGGER trg_after_insert_resident
+AFTER INSERT ON Residents
 FOR EACH ROW
 BEGIN
-  -- Xóa các bản ghi liên quan trong bảng Residents
-  DELETE FROM Residents WHERE HouseholdID = OLD.HouseholdID;
+  -- Đồng bộ tên Chủ hộ từ Residents -> Households
+  IF NEW.Relationship = 'Chủ hộ' AND NEW.HouseholdID IS NOT NULL THEN
+    UPDATE Households
+    SET HouseholdHead = NEW.FullName
+    WHERE HouseholdID = NEW.HouseholdID;
+  END IF;
 
-  -- Xóa các bản ghi liên quan trong bảng Vehicles
-  DELETE FROM Vehicles WHERE HouseholdID = OLD.HouseholdID;
+  -- Tăng số lượng thành viên của hộ dân
+  IF NEW.HouseholdID IS NOT NULL THEN
+    UPDATE Households
+    SET Members = Members + 1
+    WHERE HouseholdID = NEW.HouseholdID;
+  END IF;
+END$$
 
-  -- Xóa các bản ghi liên quan trong bảng FeeDetails
-  DELETE FROM FeeDetails WHERE HouseholdID = OLD.HouseholdID;
+CREATE TRIGGER trg_after_delete_resident
+AFTER DELETE ON Residents
+FOR EACH ROW
+BEGIN
+  -- Giảm số lượng thành viên của hộ dân
+  IF OLD.HouseholdID IS NOT NULL THEN
+    UPDATE Households
+    SET Members = CASE WHEN Members > 0 THEN Members - 1 ELSE 0 END
+    WHERE HouseholdID = OLD.HouseholdID;
+  END IF;
+END$$
+
+CREATE TRIGGER trg_after_update_resident
+AFTER UPDATE ON Residents
+FOR EACH ROW
+BEGIN
+  -- Đồng bộ tên Chủ hộ từ Residents -> Households nếu đổi tên hoặc vai trò thành Chủ hộ
+  IF NEW.Relationship = 'Chủ hộ' AND (OLD.Relationship <> 'Chủ hộ' OR NEW.FullName <> OLD.FullName) AND NEW.HouseholdID IS NOT NULL THEN
+    UPDATE Households
+    SET HouseholdHead = NEW.FullName
+    WHERE HouseholdID = NEW.HouseholdID;
+  END IF;
+
+  -- Cập nhật số thành viên nếu chuyển hộ dân (HouseholdID thay đổi)
+  IF COALESCE(NEW.HouseholdID, 0) <> COALESCE(OLD.HouseholdID, 0) THEN
+    -- Giảm ở hộ cũ
+    IF OLD.HouseholdID IS NOT NULL THEN
+      UPDATE Households
+      SET Members = CASE WHEN Members > 0 THEN Members - 1 ELSE 0 END
+      WHERE HouseholdID = OLD.HouseholdID;
+    END IF;
+    -- Tăng ở hộ mới
+    IF NEW.HouseholdID IS NOT NULL THEN
+      UPDATE Households
+      SET Members = Members + 1
+      WHERE HouseholdID = NEW.HouseholdID;
+    END IF;
+  END IF;
 END$$
 
 DELIMITER ;
 
--- khi xóa feecollection thì sẽ xóa các bản ghi liên quan trong FeeDetails
-DELIMITER $$
-
-CREATE TRIGGER trg_delete_feecollection
-BEFORE DELETE ON FeeCollections
-FOR EACH ROW
-BEGIN
-  DELETE FROM FeeDetails WHERE CollectionID = OLD.CollectionID;
-END$$
-
-DELIMITER ;
-
-
--- Trigger cập nhật trạng thái HasVehicle trong bảng Households khi có xe mới được thêm vào
+-- 3. Triggers trên bảng Vehicles: Cập nhật tự động cờ HasVehicle trong Households
 DELIMITER $$
 
 CREATE TRIGGER trg_after_insert_vehicle
 AFTER INSERT ON Vehicles
 FOR EACH ROW
 BEGIN
-  UPDATE Households
-  SET HasVehicle = TRUE
-  WHERE HouseholdID = NEW.HouseholdID;
+  IF NEW.HouseholdID IS NOT NULL THEN
+    UPDATE Households
+    SET HasVehicle = TRUE
+    WHERE HouseholdID = NEW.HouseholdID;
+  END IF;
 END$$
-
-DELIMITER ;
-
--- Trigger cập nhật trạng thái HasVehicle trong bảng Households khi xe bị xóa
-DELIMITER $$
 
 CREATE TRIGGER trg_after_delete_vehicle
 AFTER DELETE ON Vehicles
 FOR EACH ROW
 BEGIN
   DECLARE vehicle_count INT;
-
-  SELECT COUNT(*) INTO vehicle_count
-  FROM Vehicles
-  WHERE HouseholdID = OLD.HouseholdID;
-
-  IF vehicle_count = 0 THEN
-    UPDATE Households
-    SET HasVehicle = FALSE
+  
+  IF OLD.HouseholdID IS NOT NULL THEN
+    SELECT COUNT(*) INTO vehicle_count
+    FROM Vehicles
     WHERE HouseholdID = OLD.HouseholdID;
+
+    IF vehicle_count = 0 THEN
+      UPDATE Households
+      SET HasVehicle = FALSE
+      WHERE HouseholdID = OLD.HouseholdID;
+    END IF;
+  END IF;
+END$$
+
+CREATE TRIGGER trg_after_update_vehicle
+AFTER UPDATE ON Vehicles
+FOR EACH ROW
+BEGIN
+  DECLARE old_vehicle_count INT;
+  
+  -- Nếu thay đổi HouseholdID của xe
+  IF COALESCE(NEW.HouseholdID, 0) <> COALESCE(OLD.HouseholdID, 0) THEN
+    -- Đánh dấu hộ mới là có xe
+    IF NEW.HouseholdID IS NOT NULL THEN
+      UPDATE Households
+      SET HasVehicle = TRUE
+      WHERE HouseholdID = NEW.HouseholdID;
+    END IF;
+    
+    -- Kiểm tra hộ cũ còn xe nào không
+    IF OLD.HouseholdID IS NOT NULL THEN
+      SELECT COUNT(*) INTO old_vehicle_count
+      FROM Vehicles
+      WHERE HouseholdID = OLD.HouseholdID;
+
+      IF old_vehicle_count = 0 THEN
+        UPDATE Households
+        SET HasVehicle = FALSE
+        WHERE HouseholdID = OLD.HouseholdID;
+      END IF;
+    END IF;
   END IF;
 END$$
 

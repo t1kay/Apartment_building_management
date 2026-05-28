@@ -11,10 +11,12 @@ const FeeDetail = sequelize.define("FeeDetail", {
   },
   CollectionID: { 
     type: DataTypes.INTEGER, 
+    allowNull: false,
     references: { model: FeeCollection, key: "CollectionID" } 
   },
   HouseholdID: { 
     type: DataTypes.INTEGER, 
+    allowNull: false,
     references: { model: Household, key: "HouseholdID" } 
   },
   Amount: { 
