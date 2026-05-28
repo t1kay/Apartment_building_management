@@ -27,6 +27,6 @@ export const deleteUser = async (id) => {
 }; 
 
 export const findUserByUsername = async (username) => {
-  return await User.findOne({ where: { Username: username } });
+  return await User.scope('withPassword').findOne({ where: { Username: username } });
 }; 
 

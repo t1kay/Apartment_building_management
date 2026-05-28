@@ -1,7 +1,11 @@
 import express from 'express';
 import * as householdController from '../controllers/HouseholdController.js';
+import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+// Tất cả các routes liên quan đến hộ dân đều yêu cầu đăng nhập
+router.use(verifyToken);
 
 router.get('/get-all-households', householdController.getAllHouseholds);
 router.get('/get-household-by-id/:id', householdController.getHouseholdById);

@@ -1,8 +1,11 @@
 import express from 'express';
 import * as feeDetailController from '../controllers/FeeDetailController.js';
-
+import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+// Tất cả các routes chi tiết phí yêu cầu đăng nhập
+router.use(verifyToken);
 
 router.get('/get-all-fee-detail', feeDetailController.getAllFeeDetails); 
 router.get('/get-fee-detail-by-id/:id', feeDetailController.getFeeDetailById);

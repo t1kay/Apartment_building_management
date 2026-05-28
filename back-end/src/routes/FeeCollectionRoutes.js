@@ -1,7 +1,11 @@
 import express from 'express';
 import * as feeCollectionController from '../controllers/FeeCollectionController.js';
+import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+// Tất cả các routes thu phí yêu cầu đăng nhập
+router.use(verifyToken);
 
 router.get('/get-all-collection', feeCollectionController.getAllFeeCollections);
 router.get('/get-collection-by-id/:id', feeCollectionController.getFeeCollectionById);

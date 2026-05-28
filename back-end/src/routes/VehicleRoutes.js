@@ -1,7 +1,11 @@
 import express from 'express';
 import * as vehicleController from '../controllers/VehicleController.js';
+import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+// Tất cả các routes phương tiện yêu cầu đăng nhập
+router.use(verifyToken);
 
 router.get('/get-all-vehicle', vehicleController.getAllVehicles);
 router.get('/get-vehicle-by-id/:id', vehicleController.getVehicleById);
